@@ -1,3 +1,6 @@
+* Version 0.1.1
+ ** require authentication for RESET
+
 * Version 0.1.0
  ** rebrand as vivokey-otp
 
