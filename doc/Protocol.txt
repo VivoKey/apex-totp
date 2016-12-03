@@ -13,7 +13,7 @@ performed before they're available if a code is set.
 |PUT            |0x01 | Y
 |DELETE         |0x02 | Y
 |SET CODE       |0x03 | Y
-|RESET          |0x04 | N
+|RESET          |0x04 | Y
 |LIST           |0xa1 | Y
 |CALCULATE      |0xa2 | Y
 |VALIDATE       |0xa3 | N
@@ -55,7 +55,7 @@ authentication is configured (see the validate instruction below).
 
 === Response Syntax
 Challenge is returned if the authentication object is set. In that case
-authentication is required for all commands except validate and reset.
+authentication is required for all commands except validate.
 |=======================
 |Version tag      | 0x79
 |Version length   | Length of version
@@ -190,9 +190,10 @@ Reset the applet to just-installed state.
 |=========
 
 === Response Codes
-|================
-|Success | 0x9000
-|================
+|======================
+|Success       | 0x9000
+|Auth required | 0x6982
+|======================
 
 == LIST INSTRUCTION
 List configured codes.

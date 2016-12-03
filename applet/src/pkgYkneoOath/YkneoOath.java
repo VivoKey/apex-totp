@@ -129,7 +129,7 @@ public class YkneoOath extends Applet {
 		short p1p2 = Util.makeShort(p1, p2);
 		byte ins = buf[ISO7816.OFFSET_INS];
 
-		if(authObj.isActive() && ins != VALIDATE_INS && ins != RESET_INS) {
+		if(authObj.isActive() && ins != VALIDATE_INS) {
 			if(propBuf[PROP_AUTH_OFFS] != 1) {
 				ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
 			}
