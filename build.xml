@@ -7,11 +7,36 @@
     <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard-${version}.jar"/>
   </target>
 
-  <target name="build" depends="ant-javacard">
+  <target name="build" depends="test,ant-javacard">
     <javacard>
       <cap jckit="oracle_javacard_sdks/jc222_kit" aid="A0:00:00:06:17:00:61:FC:54:D5:01" output="vivokey-otp.cap" sources="applet/src">
         <applet class="pkgYkneoOath.YkneoOath"/>
       </cap>
     </javacard>
+  </target>
+
+  <target name="test">
+    <local name="tmpdir"/>
+    <tempfile property="tmpdir" destDir="${java.io.tmpdir}"/>
+    <mkdir dir="${tmpdir}"/>
+
+    <javac destDir="${tmpdir}" includeantruntime="false">
+      <src path="test/src"/>
+      <src path="applet/src"/>
+      <classpath location="junit-4.12.jar"/>
+      <classpath location="jcardsim-2.2.2-all.jar"/>
+    </javac>
+
+    <junit fork="yes">
+      <classpath location="${tmpdir}"/>
+      <classpath location="test/resources"/>
+      <classpath location="junit-4.12.jar"/>
+      <classpath location="hamcrest-core-1.3.jar"/>
+      <classpath location="jcardsim-2.2.2-all.jar"/>
+      <batchtest>
+        <fileset dir="${tmpdir}" includes="pkgYkneoOathTest/*.class"/>
+        <formatter type="plain" usefile="false"/>
+      </batchtest>
+    </junit>
   </target>
 </project>
