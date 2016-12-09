@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <project name="vivokey-otp" default="build">
   <target name="ant-javacard">
-    <get dest="ant-javacard-v1.6.jar" src="https://github.com/martinpaljak/ant-javacard/releases/download/v1.6/ant-javacard.jar" skipexisting="true"/>
-    <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard-v1.6.jar"/>
+    <local name="version"/>
+    <property name="version" value="v1.6"/>
+    <get dest="ant-javacard-${version}.jar" src="https://github.com/martinpaljak/ant-javacard/releases/download/${version}/ant-javacard.jar" skipexisting="true"/>
+    <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard-${version}.jar"/>
   </target>
 
   <target name="build" depends="ant-javacard">
