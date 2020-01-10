@@ -10,7 +10,7 @@
   <target name="build" depends="test,ant-javacard">
     <javacard>
       <cap jckit="oracle_javacard_sdks/jc222_kit" aid="A0:00:00:06:17:00:61:FC:54:D5:01" output="vivokey-otp.cap" sources="applet/src">
-        <applet class="pkgYkneoOath.YkneoOath"/>
+        <applet class="com.vivokey.otp.YkneoOath"/>
       </cap>
     </javacard>
   </target>

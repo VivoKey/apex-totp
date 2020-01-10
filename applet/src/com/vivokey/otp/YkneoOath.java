@@ -1,4 +1,4 @@
-package pkgYkneoOath;
+package com.vivokey.otp;
 
 /*
  * Copyright (c) 2013-2015 Yubico AB
@@ -23,6 +23,7 @@ import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.Util;
+import javacard.security.MessageDigest;
 import javacard.security.RandomData;
 
 public class YkneoOath extends Applet {
@@ -60,6 +61,10 @@ public class YkneoOath extends Applet {
 	private OathObj scratchAuth;
 	private byte[] propBuf;
 
+	private byte[] tar1;
+	private byte[] tar2;
+	private MessageDigest sha224;
+	
 	private static final byte PROP_AUTH_OFFS = 0;
 	private static final byte PROP_SENT_DATA_OFFS = 1;
 	private static final byte PROP_REMAINING_DATA_LEN = 3;
@@ -79,6 +84,10 @@ public class YkneoOath extends Applet {
 		sendBuffer = JCSystem.makeTransientByteArray(BUFSIZE, JCSystem.CLEAR_ON_DESELECT);
 		propBuf = JCSystem.makeTransientByteArray(PROP_BUF_SIZE, JCSystem.CLEAR_ON_DESELECT);
 		rng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+		
+		sha224 = MessageDigest.getInstance(MessageDigest.ALG_SHA_224, false);
+		tar1 = JCSystem.makeTransientByteArray((short) 28, JCSystem.CLEAR_ON_RESET);
+		tar2 = JCSystem.makeTransientByteArray((short)28, JCSystem.CLEAR_ON_RESET);
 
 		identity = new byte[CHALLENGE_LENGTH];
 		rng.generateData(identity, _0, CHALLENGE_LENGTH);
@@ -231,6 +240,10 @@ public class YkneoOath extends Applet {
 		if(Util.arrayCompare(input, offs, tempBuf, _0, len) == 0) {
 			propBuf[PROP_AUTH_OFFS] = 1;
 		} else {
+			rng.generateData(tar1, (short)0, (short)28);
+			sha224.doFinal(tar1, (short)0, (short)28, tar2, (short)0);
+			sha224.doFinal(tar2, (short)0, (short)28, tar1, (short)0);
+			sha224.doFinal(tar1, (short)0, (short)28, tar2, (short)0);
 			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
 		}
 		offs += len;
@@ -440,6 +453,7 @@ public class YkneoOath extends Applet {
 		byte digits = buf[offs++];
 
 		// protect against tearing (we want to do this as late as possible)
+
 		object.setActive(false);
 		object.setDigits(digits);
 
@@ -464,6 +478,7 @@ public class YkneoOath extends Applet {
 			object.clearImf();
 		}
 		object.setActive(true);
+
 	}
 
 	private short getLength(byte[] buf, short offs) {
