@@ -1,11 +1,12 @@
-= YKNEO-OATH Protocol Specification
-:toc:
-:toclevels: 1
+== YKOATH Protocol Specification
+The YKOATH protocol is used to manage and use OATH credentials with a YubiKey
+NEO or a YubiKey 4. It can be accessed over USB (when the CCID transport is enabled) or
+over NFC, using ISO 7816-4 commands as defined in this document.
 
 == General Definitions
 === Instructions
-Instructions marked as 'Require Auth' require a successful VALIDATE to be
-performed before they're available if a code is set.
+Instructions marked as 'Require Auth' require a successful VALIDATE command to be
+performed before they are available, if a validation code is set.
 [options="header"]
 |========================
 |Name           |Code | Require Auth
@@ -13,7 +14,8 @@ performed before they're available if a code is set.
 |PUT            |0x01 | Y
 |DELETE         |0x02 | Y
 |SET CODE       |0x03 | Y
-|RESET          |0x04 | Y
+|RESET          |0x04 | N
+|RENAME         |0x05 | Y
 |LIST           |0xa1 | Y
 |CALCULATE      |0xa2 | Y
 |VALIDATE       |0xa3 | N
@@ -25,7 +27,9 @@ performed before they're available if a code is set.
 |=================
 |HMAC-SHA1   |0x01
 |HMAC-SHA256 |0x02
+|HMAC-SHA512 |0x03
 |=================
+NOTE: HMAC-SHA512 requires YubiKey 4.3.1 or later.
 
 === TYPES
 |==========
@@ -35,12 +39,13 @@ performed before they're available if a code is set.
 
 === PROPERTIES
 |========================
-|Only increasing | 0x01 |
-Enforces that a challenge is always higher than the previous
+|Only increasing | 0x01 | Enforces that a challenge is always higher than the previous
+|Require touch   | 0x02 | Require button press to generate OATH codes
 |========================
+NOTE: Require touch requires YubiKey 4.2.4 or later.
 
 == SELECT INSTRUCTION
-Selects the applet for usage and returns, version, ID and a challenge if
+Selects the application for use and returns version, ID and a challenge if
 authentication is configured (see the validate instruction below).
 
 === Request Syntax
@@ -54,8 +59,8 @@ authentication is configured (see the validate instruction below).
 |=========
 
 === Response Syntax
-Challenge is returned if the authentication object is set. In that case
-authentication is required for all commands except validate.
+A challenge is returned if the authentication object is set. In that case
+an authentication is required for all commands except VALIDATE and RESET.
 |=======================
 |Version tag      | 0x79
 |Version length   | Length of version
@@ -72,7 +77,7 @@ authentication is required for all commands except validate.
 |=======================
 
 == PUT INSTRUCTION
-Adds a new (or overwrites) OATH code.
+Adds a new (or overwrites) OATH credential.
 
 === Request Syntax
 |====================
@@ -92,12 +97,12 @@ Adds a new (or overwrites) OATH code.
 |Key tag        |0x73
 |Key length     |Length of key data + 2
 |Key algorithm  |High 4 bits is type, low 4 bits is algorithm
-|Digits         |Number of digits in code
+|Digits         |Number of digits in OATH code
 |Key data       |Key
 |Property tag(o)|0x78
 |Property(o)    |Property byte
 |IMF tag(o)     |0x7a (only valid for HOTP)
-|IMF length(o)  |Length of imf data
+|IMF length(o)  |Length of imf data, always 4 bytes
 |IMF data(o)    |Imf
 |=================
 
@@ -110,7 +115,7 @@ Adds a new (or overwrites) OATH code.
 |=====================
 
 == DELETE INSTRUCTION
-Deletes an existing code.
+Deletes an existing credential.
 
 === Request Syntax
 |=========
@@ -139,12 +144,12 @@ Deletes an existing code.
 
 == SET CODE INSTRUCTION
 Configures Authentication.
-If length 0 is sent authentication is removed.
+If length 0 is sent, authentication is removed.
 The key to be set is expected to be a user-supplied UTF-8 encoded password
 passed through 1000 rounds of PBKDF2 with the ID from select used as salt. 16
-bytes of that is used. When configuring authentication you're required to send
-a challenge and one authentication-response with that key as well to confirm
-that the applet and the host software calculate the same response for that key.
+bytes of that are used. When configuring authentication you are required to send
+an 8 byte challenge and one authentication-response with that key, in order to confirm
+that the application and the host software can calculate the same response for that key.
 
 === Request Syntax
 |=========
@@ -179,7 +184,7 @@ that the applet and the host software calculate the same response for that key.
 |===============================
 
 == RESET INSTRUCTION
-Reset the applet to just-installed state.
+Resets the application to just-installed state.
 
 === Request Syntax
 |=========
@@ -190,13 +195,47 @@ Reset the applet to just-installed state.
 |=========
 
 === Response Codes
-|======================
-|Success       | 0x9000
-|Auth required | 0x6982
-|======================
+|================
+|Success | 0x9000
+|================
+
+== RENAME INSTRUCTION
+Renames a credential.
+
+NOTE: This is only available in YubiKey 5.3 and newer.
+
+=== Request Syntax
+|===================
+|CLA |0x00
+|INS |0x05
+|P1  |0x00
+|P2  |0x00
+|Lc  |Length of Data
+|Data|Rename Data
+|===================
+
+=== Rename Data
+|===================
+|Old Name tag    |0x71
+|Old Name length |Length of old name data, max 64 bytes
+|Old Name data   |Old name
+|New Name tag    |0x71
+|New Name length |Length of new name data, max 64 bytes
+|New Name data   |New name
+|===================
+
+=== Response Codes
+|=========================
+|Success          | 0x9000
+|No such object   | 0x6984
+|Name already used| 0x6984
+|Auth required    | 0x6982
+|Wrong syntax     | 0x6a80
+|=========================
+
 
 == LIST INSTRUCTION
-List configured codes.
+Lists configured credentials.
 
 === Request Syntax
 |=========
@@ -224,7 +263,7 @@ Response will be a continual list of objects looking like:
 |===========================
 
 == CALCULATE INSTRUCTION
-Do calculate for one named code.
+Performs CALCULATE for one named credential.
 
 === Request Syntax
 |=========
@@ -250,7 +289,7 @@ Do calculate for one named code.
 |======================
 |Response tag    | 0x75 for full response, 0x76 for truncated
 |Response length | Length of response + 1
-|Digits          | Number of digits in the code
+|Digits          | Number of digits in the OATH code
 |Response data   | Response
 |======================
 
@@ -264,11 +303,12 @@ Do calculate for one named code.
 |======================
 
 == VALIDATE INSTRUCTION
-Validate authentication (mutually).
-The challenge for this comes from the select command, perform the correct HMAC
-function over that challenge with the correct key. Then send a new challenge to
-the applet together with the response, the applet will then respond with a
-calculation of that that the host software can verify.
+Validates authentication (mutually).
+The challenge for this comes from the SELECT command. The response if computed by
+performing the correct HMAC function of that challenge with the correct key.
+A new challenge is then sent to the application, together with the response.
+The application will then respond with a similar calculation that the host
+software can verify.
 
 === Request Syntax
 |=========
@@ -306,8 +346,8 @@ calculation of that that the host software can verify.
 |========================
 
 == CALCULATE ALL INSTRUCTION
-Do calculation for all available codes, returns name + response for TOTP and
-just name for HOTP.
+Performs CALCULATE for all available credentials, returns name + response for TOTP and
+just name for HOTP and credentials requiring touch.
 
 === Request Syntax
 |=========
@@ -328,15 +368,15 @@ just name for HOTP.
 
 === Response Syntax
 For HOTP the response tag is 0x77 (No response)
+For credentials requiring touch the response tag is 0x7c (No response)
 The response will be a list of the following objects:
 |===================
 |Name tag     | 0x71
 |Name length  | Length of name
 |Name data    | Name
-|Response tag |
-0x77 for HOTP, 0x75 for full response or 0x76 for truncated response
+|Response tag | 0x77 for HOTP, 0x7c for touch, 0x75 for full response or 0x76 for truncated response
 |Response len | Length of response + 1
-|Digits       | Number of digits in the code
+|Digits       | Number of digits in the OATH code
 |Response data| Response
 |===================
 
@@ -350,7 +390,7 @@ The response will be a list of the following objects:
 |===========================
 
 == SEND REMAINING INSTRUCTION
-Send remaining data if everything didn't fit in previous response (response
+Gets remaining data if everything didn't fit in previous response (response
 code was 61xx).
 
 === Request Syntax
