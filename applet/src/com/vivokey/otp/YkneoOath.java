@@ -43,6 +43,7 @@ public class YkneoOath extends Applet {
     public static final byte DELETE_INS = 0x02;
     public static final byte SET_CODE_INS = 0x03;
     public static final byte RESET_INS = 0x04;
+	public static final byte RENAME_INS = 0x05;
 
     public static final byte LIST_INS = (byte)0xa1;
     public static final byte CALCULATE_INS = (byte)0xa2;
@@ -169,6 +170,13 @@ public class YkneoOath extends Applet {
 		case RESET_INS: // reset
 			if(p1p2 == (short)0xdead) {
 				handleReset();
+			} else {
+				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
+			}
+			break;
+		case RENAME_INS: // rename
+			if(p1p2 == 0x0000) {
+				handleRename(buf);
 			} else {
 				ISOException.throwIt(ISO7816.SW_WRONG_P1P2);
 			}
@@ -401,6 +409,35 @@ public class YkneoOath extends Applet {
 		if(object != null) {
 			object.setActive(false);
 		} else {
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
+	}
+
+	private void handleRename(byte[] buf) {
+		short offs = ISO7816.OFFSET_CDATA;
+		// Old name
+		if(buf[offs++] != NAME_TAG) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		short len = getLength(buf, offs);
+		offs += getLengthBytes(len);
+		OathObj object = OathObj.findObject(buf, offs, len);
+		if(object != null) {
+			// New name
+			if(buf[offs++] != NAME_TAG) {
+				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+			}
+			len = getLength(buf, offs);
+			offs += getLengthBytes(len);
+			OathObj otherObject = OathObj.findObject(buf, offs, len);
+			if(otherObject == null) {
+				object.setName(buf, offs, len);
+			} else {
+				// Name already in use
+				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+			}
+		} else {
+			// Old name does not exist
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
 	}
