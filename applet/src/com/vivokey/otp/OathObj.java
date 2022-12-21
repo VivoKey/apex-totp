@@ -1,4 +1,4 @@
-package pkgYkneoOath;
+package com.vivokey.otp;
 
 /*
  * Copyright (c) 2013 Yubico AB

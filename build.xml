@@ -1,42 +1,12 @@
 <?xml version="1.0"?>
-<project name="vivokey-otp" default="build">
-  <target name="ant-javacard">
-    <local name="version"/>
-    <property name="version" value="v1.6"/>
-    <get dest="ant-javacard-${version}.jar" src="https://github.com/martinpaljak/ant-javacard/releases/download/${version}/ant-javacard.jar" skipexisting="true"/>
-    <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard-${version}.jar"/>
-  </target>
-
-  <target name="build" depends="test,ant-javacard">
-    <javacard>
-      <cap jckit="oracle_javacard_sdks/jc222_kit" aid="A0:00:00:06:17:00:61:FC:54:D5:01" output="vivokey-otp.cap" sources="applet/src">
-        <applet class="com.vivokey.otp.YkneoOath"/>
+<project name="vivokey-otp" default="dist">
+  <target name="dist">
+    <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v20.03.25/ant-javacard.jar" skipexisting="true" dest="."/>
+    <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
+    <javacard jckit="oracle_javacard_sdks/jc304_kit">
+      <cap targetsdk="oracle_javacard_sdks/jc304_kit" output="target/vivokey-otp.cap" sources="applet/src" classes="target" aid="A0:00:00:06:17:00:61:FC:54:D5:01" version="1.0">
+        <applet class="com.vivokey.otp.YkneoOath" aid="A0:00:00:06:17:00:61:FC:54:D5:01:01"/>
       </cap>
     </javacard>
-  </target>
-
-  <target name="test">
-    <local name="tmpdir"/>
-    <tempfile property="tmpdir" destDir="${java.io.tmpdir}"/>
-    <mkdir dir="${tmpdir}"/>
-
-    <javac destDir="${tmpdir}" includeantruntime="false">
-      <src path="test/src"/>
-      <src path="applet/src"/>
-      <classpath location="junit-4.12.jar"/>
-      <classpath location="jcardsim-2.2.2-all.jar"/>
-    </javac>
-
-    <junit fork="yes">
-      <classpath location="${tmpdir}"/>
-      <classpath location="test/resources"/>
-      <classpath location="junit-4.12.jar"/>
-      <classpath location="hamcrest-core-1.3.jar"/>
-      <classpath location="jcardsim-2.2.2-all.jar"/>
-      <batchtest>
-        <fileset dir="${tmpdir}" includes="pkgYkneoOathTest/*.class"/>
-        <formatter type="plain" usefile="false"/>
-      </batchtest>
-    </junit>
   </target>
 </project>
