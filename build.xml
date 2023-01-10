@@ -3,8 +3,8 @@
   <target name="dist">
     <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v20.03.25/ant-javacard.jar" skipexisting="true" dest="."/>
     <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
-    <javacard jckit="oracle_javacard_sdks/jc310b43_kit">
-      <cap targetsdk="oracle_javacard_sdks/jc304_kit" output="target/vivokey-otp.cap" sources="applet/src" classes="target" aid="A0:00:00:06:17:00:61:FC:54:D5:01" version="1.1">
+    <javacard>
+      <cap output="target/vivokey-otp.cap" sources="applet/src" classes="target" aid="A0:00:00:06:17:00:61:FC:54:D5:01" version="1.1">
         <applet class="com.vivokey.otp.YkneoOath" aid="A0:00:00:06:17:00:61:FC:54:D5:01:01"/>
       </cap>
     </javacard>
