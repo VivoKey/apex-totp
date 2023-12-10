@@ -4,7 +4,7 @@
     <get src="https://github.com/martinpaljak/ant-javacard/releases/download/v20.03.25/ant-javacard.jar" skipexisting="true" dest="."/>
     <taskdef name="javacard" classname="pro.javacard.ant.JavaCard" classpath="ant-javacard.jar"/>
     <javacard>
-      <cap output="target/vivokey-otp.cap" sources="applet/src" classes="target" aid="A0:00:00:05:27:21:01:01:41:50:45:58" version="1.1">
+      <cap output="target/vivokey-otp.cap" sources="src" classes="target" aid="A0:00:00:05:27:21:01:01:41:50:45:58" version="1.1">
         <applet class="com.vivokey.otp.YkneoOath" aid="A0:00:00:05:27:21:01:01:41:50:45:58:01"/>
       </cap>
     </javacard>
