@@ -50,16 +50,13 @@ if __name__ == '__main__':
             timestamp = (int(time.time()) // 30).to_bytes(8, "big")
             name = list(args.name.encode("ASCII"))
             reqdata = [ 0x71, len(name) ] + name + [ 0x74, 0x08 ] + list(timestamp)
-            print(bytes(reqdata).hex())
             data, sw1, sw2 = connection.transmit(
                 [0x00, 0xA2, 0x00, 0x01, len(reqdata)] + reqdata + [ 0x00 ])
             if(sw1 == 0x90 and sw2 == 0x00):
                 print('success: Computed code, card response is ok')
                 digits = data[2]
-                print(digits)
-                print(bytes(data).hex())
                 code = (int.from_bytes(data[-4:]) & 0x7FFFFFFF) % (10 ** digits)
-                print('code is:' + str(code))
+                print('info: Code is ' + str(code))
             else:
                 print('error: Card computation response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}')
         else:
