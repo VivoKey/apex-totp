@@ -49,14 +49,23 @@ if __name__ == '__main__':
             # COMPUTE TRUNCATED
             timestamp = (int(time.time()) // 30).to_bytes(8, "big")
             name = list(args.name.encode("ASCII"))
-            reqdata = [ 0x71, len(name) ] + name + [ 0x74, 0x08 ] + list(timestamp)
+            # reqdata = [ 0x71, len(name) ] + name + [ 0x74, 0x08 ] + list(timestamp)
+            reqdata = [ 0x74, 0x08 ] + list(timestamp)
+            req =  [0x00, 0xA4, 0x00, 0x01, len(reqdata)] + reqdata + [ 0x00 ]
+            print(bytes(req).hex())
             data, sw1, sw2 = connection.transmit(
-                [0x00, 0xA2, 0x00, 0x01, len(reqdata)] + reqdata + [ 0x00 ])
+               req)
             if(sw1 == 0x90 and sw2 == 0x00):
                 print('success: Computed code, card response is ok')
                 digits = data[2]
                 code = (int.from_bytes(data[-4:]) & 0x7FFFFFFF) % (10 ** digits)
                 print('info: Code is ' + str(code))
+            elif(sw1 == 0x61):
+                print(f'success: {sw2} more bytes are available')
+                data, sw1, sw2 = connection.transmit(
+                    [0x00, 0xA5, 0x00, 0x00, 0x00 ])
+                res = bytes(data)
+                print(f'info: sw1 = {sw1}, sw2 = {sw2}, data = {res}')
             else:
                 print('error: Card computation response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}')
         else:
