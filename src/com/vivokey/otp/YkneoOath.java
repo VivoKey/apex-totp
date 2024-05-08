@@ -422,24 +422,23 @@ public class YkneoOath extends Applet {
 		short len = getLength(buf, offs);
 		offs += getLengthBytes(len);
 		OathObj object = OathObj.findObject(buf, offs, len);
-		if(object != null) {
-			// New name
-			if(buf[offs++] != NAME_TAG) {
-				ISOException.throwIt(ISO7816.SW_WRONG_DATA);
-			}
-			len = getLength(buf, offs);
-			offs += getLengthBytes(len);
-			OathObj otherObject = OathObj.findObject(buf, offs, len);
-			if(otherObject == null) {
-				object.setName(buf, offs, len);
-			} else {
-				// Name already in use
-				ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-			}
-		} else {
+		if(object == null) {
 			// Old name does not exist
 			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
 		}
+		offs += len;
+		// New name
+		if(buf[offs++] != NAME_TAG) {
+			ISOException.throwIt(ISO7816.SW_WRONG_DATA);
+		}
+		len = getLength(buf, offs);
+		offs += getLengthBytes(len);
+		OathObj otherObject = OathObj.findObject(buf, offs, len);
+		if(otherObject != null) {
+			// Name already in use
+			ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+		}
+		object.setName(buf, offs, len);
 	}
 
 	private short calculateTotalLen() {
